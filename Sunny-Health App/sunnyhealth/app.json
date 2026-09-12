@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "plugins": [
+      "expo-asset",
+      "expo-router",
+      "react-native-ble-plx"
+    ],
+    "scheme": "sunnyhealth",
+    "android": {
+      "package": "com.anonymous.sunnyhealth"
+    }
+  }
+}
