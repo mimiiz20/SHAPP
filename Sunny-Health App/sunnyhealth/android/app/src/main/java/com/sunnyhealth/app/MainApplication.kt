@@ -1,4 +1,4 @@
-package com.anonymous.sunnyhealth
+package com.sunnyhealth.app
 
 import android.app.Application
 import android.content.res.Configuration

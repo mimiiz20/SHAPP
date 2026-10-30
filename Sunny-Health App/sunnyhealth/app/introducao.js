@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Easing,Image,} from 'react-native';
+import {StyleSheet,Text,View,ScrollView,TouchableOpacity,Animated,Easing,Image,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -19,7 +19,6 @@ export default function Introducao() {
 
   const lampScale = useRef(new Animated.Value(0.35)).current;
   const lampOpacity = useRef(new Animated.Value(0)).current;
-
   const [lampVisible, setLampVisible] = useState(false);
 
   // ============================================================
@@ -29,7 +28,6 @@ export default function Introducao() {
   const titleTranslate = useRef(new Animated.Value(-80)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleScale = useRef(new Animated.Value(0.88)).current;
-
   const titleLineScale = useRef(new Animated.Value(0)).current;
   const titleLineOpacity = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +53,7 @@ export default function Introducao() {
   const firstStepOpacity = useRef(new Animated.Value(0)).current;
 
   // ============================================================
-  // ANIMAÇÃO DO BOTÃO / BOLINHAS
+  // ANIMAÇÃO DO BOTÃO
   // ============================================================
 
   const stepsTranslate = useRef(new Animated.Value(30)).current;
@@ -70,7 +68,11 @@ export default function Introducao() {
     // ARCOS
     // ------------------------------------------------------------
 
-    const animateArc = (animation, duration, delay = 0) => {
+    const animateArc = (
+      animation,
+      duration,
+      delay = 0
+    ) => {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
@@ -256,7 +258,7 @@ export default function Introducao() {
 
       Animated.delay(200),
 
-      // BOTÃO E BOLINHAS
+      // BOTÃO
       Animated.parallel([
         Animated.timing(stepsTranslate, {
           toValue: 0,
@@ -353,9 +355,7 @@ export default function Introducao() {
   return (
     <View style={styles.container}>
 
-      {/* ========================================================
-          FUNDO
-      ======================================================== */}
+      {/* FUNDO */}
 
       <LinearGradient
         colors={[
@@ -371,9 +371,7 @@ export default function Introducao() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ========================================================
-          ARCOS
-      ======================================================== */}
+      {/* ARCOS */}
 
       <Animated.View
         pointerEvents="none"
@@ -429,9 +427,7 @@ export default function Introducao() {
         ]}
       />
 
-      {/* ========================================================
-          BRILHOS
-      ======================================================== */}
+      {/* BRILHOS */}
 
       <View
         pointerEvents="none"
@@ -448,9 +444,7 @@ export default function Introducao() {
         style={styles.glowThree}
       />
 
-      {/* ========================================================
-          CONTEÚDO
-      ======================================================== */}
+      {/* CONTEÚDO */}
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -459,9 +453,7 @@ export default function Introducao() {
         scrollEventThrottle={16}
       >
 
-        {/* ======================================================
-            CABEÇALHO
-        ====================================================== */}
+        {/* CABEÇALHO */}
 
         <View style={styles.header}>
 
@@ -476,7 +468,6 @@ export default function Introducao() {
                   styles.title,
                   {
                     opacity: titleOpacity,
-
                     transform: [
                       {
                         translateX: titleTranslate,
@@ -498,7 +489,6 @@ export default function Introducao() {
                   styles.titleLine,
                   {
                     opacity: titleLineOpacity,
-
                     transform: [
                       {
                         scaleX: titleLineScale,
@@ -517,7 +507,6 @@ export default function Introducao() {
                 styles.appIconContainer,
                 {
                   opacity: logoOpacity,
-
                   transform: [
                     {
                       scale: logoScale,
@@ -529,28 +518,23 @@ export default function Introducao() {
                 },
               ]}
             >
-
               <Image
                 source={require('../assets/images/Logo.png')}
                 style={styles.appIcon}
               />
-
             </Animated.View>
 
           </View>
 
         </View>
 
-        {/* ======================================================
-            SOBRE O APLICATIVO + NOSSO OBJETIVO
-        ====================================================== */}
+        {/* SOBRE O APLICATIVO + NOSSO OBJETIVO */}
 
         <Animated.View
           style={[
             styles.card,
             {
               opacity: cardOpacity,
-
               transform: [
                 {
                   translateY: cardTranslate,
@@ -588,7 +572,7 @@ export default function Introducao() {
             acompanhar os dados ao longo do tempo.
           </Text>
 
-          {/* OBJETIVO INTEGRADO */}
+          {/* OBJETIVO */}
 
           <View style={styles.objectiveBox}>
 
@@ -597,7 +581,6 @@ export default function Introducao() {
                 styles.yellowCircle,
                 {
                   opacity: lampOpacity,
-
                   transform: [
                     {
                       scale: lampScale,
@@ -606,13 +589,11 @@ export default function Introducao() {
                 },
               ]}
             >
-
               <Ionicons
                 name="bulb-outline"
                 size={48}
                 color="#30364D"
               />
-
             </Animated.View>
 
             <View style={styles.objectiveContent}>
@@ -632,16 +613,13 @@ export default function Introducao() {
 
         </Animated.View>
 
-        {/* ======================================================
-            COMO O SUNNY HEALTH PODE AJUDAR
-        ====================================================== */}
+        {/* COMO O SUNNY HEALTH PODE AJUDAR */}
 
         <Animated.View
           style={[
             styles.helpCard,
             {
               opacity: helpOpacity,
-
               transform: [
                 {
                   translateY: helpTranslate,
@@ -744,16 +722,13 @@ export default function Introducao() {
 
         </Animated.View>
 
-        {/* ======================================================
-            PRIMEIRO PASSO
-        ====================================================== */}
+        {/* PRIMEIRO PASSO */}
 
         <Animated.View
           style={[
             styles.techCard,
             {
               opacity: firstStepOpacity,
-
               transform: [
                 {
                   translateY: firstStepTranslate,
@@ -766,13 +741,11 @@ export default function Introducao() {
           <View style={styles.techHeader}>
 
             <View style={styles.techIcon}>
-
               <Ionicons
                 name="person-add-outline"
                 size={23}
                 color="#30364D"
               />
-
             </View>
 
             <Text style={styles.techTitle}>
@@ -809,16 +782,13 @@ export default function Introducao() {
 
         </Animated.View>
 
-        {/* ======================================================
-            BOTÃO + BOLINHAS
-        ====================================================== */}
+        {/* BOTÃO */}
 
         <Animated.View
           style={[
             styles.stepsContainer,
             {
               opacity: stepsOpacity,
-
               transform: [
                 {
                   translateY: stepsTranslate,
@@ -828,36 +798,15 @@ export default function Introducao() {
           ]}
         >
 
-          {/* BOTÃO */}
-
           <TouchableOpacity
             style={styles.nextButton}
             activeOpacity={0.85}
             onPress={() => router.push('/cadastro')}
           >
-
             <Text style={styles.nextButtonText}>
               CONTINUAR
             </Text>
-
           </TouchableOpacity>
-
-          {/* INDICADOR DE PÁGINA */}
-
-          <View style={styles.pageDots}>
-
-            <View
-              style={[
-                styles.pageDot,
-                styles.pageDotActive,
-              ]}
-            />
-
-            <View style={styles.pageDot} />
-
-            <View style={styles.pageDot} />
-
-          </View>
 
         </Animated.View>
 
@@ -1018,13 +967,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     marginBottom: 18,
-
     shadowColor: '#30364D',
     shadowOffset: {
       width: 0,
       height: 5,
     },
-
     shadowOpacity: 0.10,
     shadowRadius: 12,
     elevation: 4,
@@ -1062,7 +1009,7 @@ const styles = StyleSheet.create({
   },
 
   // ==============================================================
-  // OBJETIVO DENTRO DO CARD
+  // OBJETIVO
   // ==============================================================
 
   objectiveBox: {
@@ -1114,13 +1061,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     marginBottom: 18,
-
     shadowColor: '#30364D',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-
     shadowOpacity: 0.09,
     shadowRadius: 10,
     elevation: 3,
@@ -1186,13 +1131,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     marginBottom: 25,
-
     shadowColor: '#30364D',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-
     shadowOpacity: 0.10,
     shadowRadius: 10,
     elevation: 3,
@@ -1249,7 +1192,7 @@ const styles = StyleSheet.create({
   },
 
   // ==============================================================
-  // BOTÃO + BOLINHAS
+  // BOTÃO
   // ==============================================================
 
   stepsContainer: {
@@ -1265,13 +1208,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-
     shadowColor: '#FFFFFF',
     shadowOffset: {
       width: 0,
       height: 5,
     },
-
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 4,
@@ -1283,66 +1224,13 @@ const styles = StyleSheet.create({
     color: '#F9FAFF',
     letterSpacing: 1,
     marginRight: 10,
-
     textShadowColor: '#30364D',
     textShadowOffset: {
       width: 2,
       height: 2,
     },
-
     textShadowRadius: 0,
   },
-
-  // ==============================================================
-  // BOLINHAS
-  // ==============================================================
-
-  pageDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 16,
-  },
-
-  pageDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-
-    shadowColor: '#30364D',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-
-    shadowOpacity: 0.45,
-    shadowRadius: 4,
-    elevation: 4,
-
-    borderWidth: 1,
-    borderColor: 'rgba(48,54,77,0.25)',
-  },
-
-  pageDotActive: {
-    width: 17,
-    height: 17,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-
-    shadowColor: '#30364D',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-
-    shadowOpacity: 0.55,
-    shadowRadius: 5,
-    elevation: 5,
-
-    borderWidth: 2,
-    borderColor: 'rgba(48,54,77,0.30)',
-  },
 });
+
 

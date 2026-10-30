@@ -1,21 +1,13 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Animated,
-  Easing,
-  Image,
-} from 'react-native';
-
+import {StyleSheet,Text,View,TouchableOpacity,Animated,Easing,Image,} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
+import {initializeDatabase,getDatabase,resetDatabaseForDevelopment,} from '../database/database';
+
 export default function Index() {
-  // ============================================================
+
   // ANIMAÇÕES
-  // ============================================================
 
   const logoScale = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -31,16 +23,51 @@ export default function Index() {
   const buttonScale = useRef(new Animated.Value(0.9)).current;
 
   const [transitioning, setTransitioning] = useState(false);
+  const [onboardingConcluido, setOnboardingConcluido] = useState(false);
+  const [verificandoBanco, setVerificandoBanco] = useState(true);
 
-  // ============================================================
-  // ANIMAÇÃO INICIAL
-  // ============================================================
+  // VERIFICA O PRIMEIRO ACESSO
 
   useEffect(() => {
-    // ------------------------------------------------------------
-    // IMAGEM
-    // ------------------------------------------------------------
+    const verificarPrimeiroAcesso = async () => {
+      try {
+        await initializeDatabase();
 
+        if (__DEV__) {
+          await resetDatabaseForDevelopment();
+        }
+
+        const database = await getDatabase();
+
+        const resultado = await database.getFirstAsync(`
+          SELECT onboarding_concluido
+          FROM sessao
+          WHERE id = 1
+          LIMIT 1;
+        `);
+
+        setOnboardingConcluido(
+          resultado?.onboarding_concluido === 1
+        );
+      } catch (error) {
+        console.error(
+          'Erro ao verificar primeiro acesso:',
+          error
+        );
+
+        setOnboardingConcluido(false);
+      } finally {
+        setVerificandoBanco(false);
+      }
+    };
+
+    verificarPrimeiroAcesso();
+  }, []);
+
+  // ANIMAÇÃO INICIAL
+
+  useEffect(() => {
+    // Imagem
     Animated.parallel([
       Animated.timing(imageOpacity, {
         toValue: 1,
@@ -48,7 +75,6 @@ export default function Index() {
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-
       Animated.timing(imageScale, {
         toValue: 1,
         duration: 1200,
@@ -57,10 +83,7 @@ export default function Index() {
       }),
     ]).start();
 
-    // ------------------------------------------------------------
-    // LOGO
-    // ------------------------------------------------------------
-
+    // Logo
     Animated.parallel([
       Animated.timing(logoOpacity, {
         toValue: 1,
@@ -68,7 +91,6 @@ export default function Index() {
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-
       Animated.sequence([
         Animated.timing(logoScale, {
           toValue: 1.15,
@@ -76,7 +98,6 @@ export default function Index() {
           easing: Easing.out(Easing.back(1.7)),
           useNativeDriver: true,
         }),
-
         Animated.spring(logoScale, {
           toValue: 1,
           friction: 6,
@@ -84,7 +105,6 @@ export default function Index() {
           useNativeDriver: true,
         }),
       ]),
-
       Animated.timing(logoRotate, {
         toValue: 0,
         duration: 1000,
@@ -93,13 +113,9 @@ export default function Index() {
       }),
     ]).start();
 
-    // ------------------------------------------------------------
-    // TEXTO
-    // ------------------------------------------------------------
-
+    // Texto
     Animated.sequence([
       Animated.delay(400),
-
       Animated.parallel([
         Animated.timing(contentOpacity, {
           toValue: 1,
@@ -107,7 +123,6 @@ export default function Index() {
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-
         Animated.timing(contentTranslate, {
           toValue: 0,
           duration: 600,
@@ -117,13 +132,9 @@ export default function Index() {
       ]),
     ]).start();
 
-    // ------------------------------------------------------------
-    // BOTÃO
-    // ------------------------------------------------------------
-
+    // Botão
     Animated.sequence([
       Animated.delay(700),
-
       Animated.parallel([
         Animated.timing(buttonOpacity, {
           toValue: 1,
@@ -131,7 +142,6 @@ export default function Index() {
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-
         Animated.spring(buttonScale, {
           toValue: 1,
           friction: 6,
@@ -142,23 +152,17 @@ export default function Index() {
     ]).start();
   }, []);
 
-  // ============================================================
   // ROTAÇÃO DA LOGO
-  // ============================================================
 
   const logoRotation = logoRotate.interpolate({
     inputRange: [-1, 0],
     outputRange: ['-360deg', '0deg'],
   });
 
-  // ============================================================
-  // BOTÃO CONTINUAR
-  // ============================================================
+  // ENTRADA NO APLICATIVO
 
   const entrarNoApp = () => {
-    if (transitioning) {
-      return;
-    }
+    if (transitioning || verificandoBanco) return;
 
     setTransitioning(true);
 
@@ -169,28 +173,24 @@ export default function Index() {
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
-
       Animated.timing(logoOpacity, {
         toValue: 0,
         duration: 400,
         easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-
       Animated.timing(imageScale, {
         toValue: 1.12,
         duration: 500,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
-
       Animated.timing(contentOpacity, {
         toValue: 0,
         duration: 350,
         easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
-
       Animated.timing(buttonOpacity, {
         toValue: 0,
         duration: 350,
@@ -198,31 +198,26 @@ export default function Index() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      router.push('/introducao');
+      if (onboardingConcluido) {
+        router.replace('/batisono');
+      } else {
+        router.push('/introducao');
+      }
     });
   };
 
-  // ============================================================
   // INTERFACE
-  // ============================================================
 
   return (
     <View style={styles.container}>
 
-      {/* ========================================================
-          IMAGEM DE FUNDO
-      ======================================================== */}
-
+      {/* IMAGEM DE FUNDO */}
       <Animated.View
         style={[
           styles.imageContainer,
           {
             opacity: imageOpacity,
-            transform: [
-              {
-                scale: imageScale,
-              },
-            ],
+            transform: [{ scale: imageScale }],
           },
         ]}
       >
@@ -232,85 +227,59 @@ export default function Index() {
         />
       </Animated.View>
 
-      {/* ========================================================
-          GRADIENTES
-      ======================================================== */}
-
+      {/* GRADIENTES */}
       <View style={styles.gradientContainer}>
 
-        {/* ------------------------------------------------------
-            AZUL / MARINHO
-        ------------------------------------------------------ */}
-
         <LinearGradient
           colors={[
-            'rgba(48, 54, 77, 0.70)',
-            'rgba(48, 54, 77, 0.38)',
-            'rgba(48, 54, 77, 0.15)',
-            'rgba(48, 54, 77, 0.48)',
+            'rgba(75, 88, 117, 0.62)',
+            'rgba(75, 88, 117, 0.28)',
+            'rgba(75, 88, 117, 0.08)',
+            'rgba(75, 88, 117, 0.35)',
           ]}
           locations={[0, 0.28, 0.58, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.blueGradient}
+          style={styles.gradient}
           pointerEvents="none"
         />
-
-        {/* ------------------------------------------------------
-            AMARELO
-        ------------------------------------------------------ */}
 
         <LinearGradient
           colors={[
-            'rgba(240, 208, 96, 0.55)',
-            'rgba(240, 208, 96, 0.25)',
-            'rgba(240, 208, 96, 0.08)',
-            'rgba(240, 208, 96, 0)',
+            'rgba(243, 217, 130, 0.42)',
+            'rgba(243, 217, 130, 0.18)',
+            'rgba(243, 217, 130, 0.05)',
+            'rgba(243, 217, 130, 0)',
           ]}
-          locations={[0, 0.25, 0.50, 0.80]}
+          locations={[0, 0.25, 0.5, 0.8]}
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 0.75 }}
-          style={styles.yellowGradient}
+          style={styles.gradient}
           pointerEvents="none"
         />
-
-        {/* ------------------------------------------------------
-            GRADIENTE ESCURO INFERIOR
-        ------------------------------------------------------ */}
 
         <LinearGradient
           colors={[
             'rgba(48, 54, 77, 0)',
-            'rgba(48, 54, 77, 0.08)',
-            'rgba(48, 54, 77, 0.40)',
-            'rgba(48, 54, 77, 0.78)',
-            'rgba(48, 54, 77, 0.98)',
+            'rgba(48, 54, 77, 0.06)',
+            'rgba(48, 54, 77, 0.25)',
+            'rgba(48, 54, 77, 0.55)',
+            'rgba(48, 54, 77, 0.82)',
           ]}
-          locations={[0, 0.30, 0.52, 0.72, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.bottomGradient}
+          locations={[0, 0.3, 0.52, 0.72, 1]}
+          style={styles.gradient}
           pointerEvents="none"
         />
 
       </View>
 
-      {/* ========================================================
-          LOGO
-      ======================================================== */}
-
+      {/* LOGO */}
       <Animated.View
         style={[
           styles.logoCorner,
           {
             opacity: logoOpacity,
             transform: [
-              {
-                scale: logoScale,
-              },
-              {
-                rotate: logoRotation,
-              },
+              { scale: logoScale },
+              { rotate: logoRotation },
             ],
           },
         ]}
@@ -321,25 +290,17 @@ export default function Index() {
         />
       </Animated.View>
 
-      {/* ========================================================
-          CONTEÚDO
-      ======================================================== */}
-
+      {/* CONTEÚDO */}
       <View style={styles.content}>
 
-        {/* ======================================================
-            TEXTO
-        ====================================================== */}
-
+        {/* TEXTO */}
         <Animated.View
           style={[
             styles.textContainer,
             {
               opacity: contentOpacity,
               transform: [
-                {
-                  translateY: contentTranslate,
-                },
+                { translateY: contentTranslate },
               ],
             },
           ]}
@@ -361,20 +322,13 @@ export default function Index() {
           </Text>
         </Animated.View>
 
-        {/* ======================================================
-            BOTÃO
-        ====================================================== */}
-
+        {/* BOTÃO */}
         <Animated.View
           style={[
             styles.buttonContainer,
             {
               opacity: buttonOpacity,
-              transform: [
-                {
-                  scale: buttonScale,
-                },
-              ],
+              transform: [{ scale: buttonScale }],
             },
           ]}
         >
@@ -382,7 +336,7 @@ export default function Index() {
             style={styles.button}
             activeOpacity={0.85}
             onPress={entrarNoApp}
-            disabled={transitioning}
+            disabled={transitioning || verificandoBanco}
           >
             <Text style={styles.buttonText}>
               CONTINUAR
@@ -391,31 +345,21 @@ export default function Index() {
         </Animated.View>
 
       </View>
-
     </View>
   );
 }
 
-// =================================================================
 // ESTILOS
-// =================================================================
-
 const styles = StyleSheet.create({
 
-  // ===============================================================
-  // TELA PRINCIPAL
-  // ===============================================================
-
+  // Fundo
   container: {
     flex: 1,
-    backgroundColor: '#30364D',
+    backgroundColor: '#4B5875',
     overflow: 'hidden',
   },
 
-  // ===============================================================
-  // IMAGEM DE FUNDO
-  // ===============================================================
-
+  // Imagem
   imageContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
@@ -427,43 +371,17 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
-  // ===============================================================
-  // CONTAINER DOS GRADIENTES
-  // ===============================================================
-
+  // Gradientes
   gradientContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
 
-  // ===============================================================
-  // GRADIENTE AZUL
-  // ===============================================================
-
-  blueGradient: {
+  gradient: {
     ...StyleSheet.absoluteFillObject,
   },
 
-  // ===============================================================
-  // GRADIENTE AMARELO
-  // ===============================================================
-
-  yellowGradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
-  // ===============================================================
-  // GRADIENTE INFERIOR
-  // ===============================================================
-
-  bottomGradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
-  // ===============================================================
-  // LOGO
-  // ===============================================================
-
+  // Logo
   logoCorner: {
     position: 'absolute',
     top: 30,
@@ -481,126 +399,80 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
-  // ===============================================================
-  // CONTEÚDO
-  // ===============================================================
-
+  // Conteúdo inferior
   content: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-
     paddingHorizontal: 28,
-
-    // AUMENTADO PARA SUBIR O CONTEÚDO
     paddingBottom: 90,
-
     alignItems: 'center',
     zIndex: 10,
   },
 
-  // ===============================================================
-  // CONTAINER DO TEXTO
-  // ===============================================================
-
+  // Container branco dos textos
   textContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 8,
 
-    // DIMINUÍDO PARA APROXIMAR O BOTÃO
+    backgroundColor: 'rgba(255, 255, 255, 0.90)',
+    borderRadius: 28,
+
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     marginBottom: 28,
+
+    shadowColor: '#4B5875',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 5,
   },
 
-  // ===============================================================
-  // BEM-VINDO
-  // ===============================================================
-
+  // Título principal
   welcome: {
     fontSize: 40,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#4B5875',
     textAlign: 'center',
     letterSpacing: 0.3,
-
-    textShadowColor: 'rgba(0, 0, 0, 0.45)',
-    textShadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    textShadowRadius: 5,
   },
 
-  // ===============================================================
-  // SUNNY HEALTH
-  // ===============================================================
-
+  // Nome do aplicativo
   title: {
     fontSize: 27,
     fontWeight: '800',
-    color: '#FFE88A',
+    color: '#5F9FC2',
     textAlign: 'center',
     letterSpacing: 1.5,
     marginTop: 6,
-
-    textShadowColor: 'rgba(0, 0, 0, 0.45)',
-    textShadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    textShadowRadius: 4,
   },
 
-  // ===============================================================
-  // LINHA
-  // ===============================================================
-
+  // Linha decorativa
   titleLine: {
     width: 80,
     height: 4,
     borderRadius: 10,
-
-    backgroundColor: '#FFE88A',
-
+    backgroundColor: '#F3D982',
     marginTop: 14,
     marginBottom: 18,
-
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-
-    elevation: 3,
   },
 
-  // ===============================================================
-  // DESCRIÇÃO
-  // ===============================================================
-
+  // Descrição
   description: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: '#5E667D',
     textAlign: 'center',
     maxWidth: 350,
-
-    textShadowColor: 'rgba(0, 0, 0, 0.55)',
-    textShadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    textShadowRadius: 5,
   },
 
-  // ===============================================================
-  // BOTÃO
-  // ===============================================================
-
+  // Botão
   buttonContainer: {
     width: '100%',
   },
@@ -610,27 +482,25 @@ const styles = StyleSheet.create({
     height: 62,
     borderRadius: 18,
 
-    backgroundColor: '#F0D060',
+    backgroundColor: '#E6C968',
 
     justifyContent: 'center',
     alignItems: 'center',
 
-    shadowColor: '#30364D',
+    shadowColor: '#4B5875',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 5,
     },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-
-    elevation: 8,
+    shadowOpacity: 0.20,
+    shadowRadius: 9,
+    elevation: 6,
   },
 
   buttonText: {
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 1.2,
-    color: '#fcfcfc',
+    color: '#FFFFFF',
   },
-
 });

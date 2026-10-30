@@ -1,4 +1,4 @@
-package com.anonymous.sunnyhealth
+package com.sunnyhealth.app
 
 import android.os.Build
 import android.os.Bundle

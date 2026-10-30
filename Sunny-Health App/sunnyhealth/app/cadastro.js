@@ -1,89 +1,176 @@
-import {StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Easing, TextInput, Pressable,} from 'react-native';
+import {StyleSheet,Text,View,ScrollView,TouchableOpacity,Animated,Easing,TextInput,Pressable,} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import {initializeDatabase,getDatabase,} from '../database/database';
 
 export default function Cadastro() {
+
+  // DADOS DO USUÁRIO
+
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+
+  // TERMOS E PRIVACIDADE
+
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [aceitouPrivacidade, setAceitouPrivacidade] = useState(false);
 
   // ANIMAÇÃO DOS ARCOS
+  // ============================================================
+
   const arc1 = useRef(new Animated.Value(0)).current;
   const arc2 = useRef(new Animated.Value(0)).current;
   const arc3 = useRef(new Animated.Value(0)).current;
 
+  // ============================================================
   // ANIMAÇÃO DO TÍTULO
-  const titleTranslate = useRef(new Animated.Value(-80)).current;
-  const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleScale = useRef(new Animated.Value(0.88)).current;
+  // ============================================================
 
+  const titleTranslate = useRef(
+    new Animated.Value(-80)
+  ).current;
+
+  const titleOpacity = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  const titleScale = useRef(
+    new Animated.Value(0.88)
+  ).current;
+
+  // ============================================================
   // ANIMAÇÃO DO CARD
-  const cardTranslate = useRef(new Animated.Value(45)).current;
-  const cardOpacity = useRef(new Animated.Value(0)).current;
+  // ============================================================
 
-  // INÍCIO DAS ANIMAÇÕES
+  const cardTranslate = useRef(
+    new Animated.Value(45)
+  ).current;
+
+  const cardOpacity = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  // ============================================================
+  // INICIALIZAÇÃO DO BANCO
+  // ============================================================
+
   useEffect(() => {
+
+    const prepararBanco = async () => {
+
+      try {
+
+        await initializeDatabase();
+
+      } catch (error) {
+
+        console.error(
+          'Erro ao inicializar banco:',
+          error
+        );
+
+      }
+
+    };
+
+    prepararBanco();
+
+  }, []);
+
+  // ============================================================
+  // INÍCIO DAS ANIMAÇÕES
+  // ============================================================
+
+  useEffect(() => {
+
+    // ------------------------------------------------------------
     // ARCOS
-    const animateArc = (animation, duration, delay = 0) => {
+    // ------------------------------------------------------------
+
+    const animateArc = (
+      animation,
+      duration,
+      delay = 0
+    ) => {
+
       Animated.loop(
+
         Animated.sequence([
+
           Animated.delay(delay),
+
           Animated.timing(animation, {
             toValue: 1,
             duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
+
           Animated.timing(animation, {
             toValue: 0,
             duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
+
         ])
+
       ).start();
+
     };
 
     animateArc(arc1, 9000);
     animateArc(arc2, 12000, 1000);
     animateArc(arc3, 15000, 2000);
 
+    // ------------------------------------------------------------
     // TÍTULO
+    // ------------------------------------------------------------
+
     Animated.parallel([
+
       Animated.timing(titleTranslate, {
         toValue: 0,
         duration: 900,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
+
       Animated.timing(titleOpacity, {
         toValue: 1,
         duration: 650,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
+
       Animated.sequence([
+
         Animated.timing(titleScale, {
           toValue: 1.06,
           duration: 550,
           easing: Easing.out(Easing.back(1.5)),
           useNativeDriver: true,
         }),
+
         Animated.spring(titleScale, {
           toValue: 1,
           friction: 6,
           tension: 80,
           useNativeDriver: true,
         }),
+
       ]),
+
     ]).start();
 
+    // ------------------------------------------------------------
     // CARD
+    // ------------------------------------------------------------
+
     Animated.parallel([
+
       Animated.timing(cardTranslate, {
         toValue: 0,
         duration: 700,
@@ -91,6 +178,7 @@ export default function Cadastro() {
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
+
       Animated.timing(cardOpacity, {
         toValue: 1,
         duration: 600,
@@ -98,10 +186,15 @@ export default function Cadastro() {
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
+
     ]).start();
+
   }, []);
 
+  // ============================================================
   // MOVIMENTO DOS ARCOS
+  // ============================================================
+
   const moveArc1 = arc1.interpolate({
     inputRange: [0, 1],
     outputRange: [-20, 25],
@@ -117,9 +210,165 @@ export default function Cadastro() {
     outputRange: [-15, 35],
   });
 
+  // ============================================================
+  // CADASTRAR USUÁRIO
+  // ============================================================
+
+  const cadastrarUsuario = async () => {
+
+    try {
+
+      // ----------------------------------------------------------
+      // VALIDAÇÃO DOS CAMPOS
+      // ----------------------------------------------------------
+
+      if (
+        !nome.trim() ||
+        !email.trim() ||
+        !senha.trim()
+      ) {
+
+        alert('Preencha todos os campos.');
+
+        return;
+      }
+
+      // ----------------------------------------------------------
+      // PEGA O BANCO
+      // ----------------------------------------------------------
+
+      const database = await getDatabase();
+
+      // ----------------------------------------------------------
+      // CADASTRA O USUÁRIO
+      // ----------------------------------------------------------
+
+      const resultado = await database.runAsync(
+
+        `INSERT INTO usuarios
+         (nome, email, senha)
+         VALUES (?, ?, ?);`,
+
+        nome.trim(),
+
+        email
+          .trim()
+          .toLowerCase(),
+
+        senha
+
+      );
+
+      // ----------------------------------------------------------
+      // PEGA O ID DO USUÁRIO CRIADO
+      // ----------------------------------------------------------
+
+      const usuarioId =
+        resultado.lastInsertRowId;
+
+      console.log(
+        'Usuário cadastrado com sucesso!'
+      );
+
+      console.log(
+        'ID do usuário:',
+        usuarioId
+      );
+
+      // ----------------------------------------------------------
+      // CRIA A SESSÃO
+      // ----------------------------------------------------------
+      //
+      // onboarding_concluido = 0
+      //
+      // Isso significa:
+      //
+      // "O usuário acabou de se cadastrar,
+      // mas ainda não terminou as etapas iniciais."
+      //
+      // ----------------------------------------------------------
+
+      await database.runAsync(
+
+        `INSERT OR REPLACE INTO sessao
+         (id, usuario_id, onboarding_concluido)
+         VALUES (1, ?, 0);`,
+
+        Number(usuarioId)
+
+      );
+
+      console.log(
+        'Sessão criada com sucesso!'
+      );
+
+      console.log(
+        'Onboarding ainda não concluído.'
+      );
+
+      // ----------------------------------------------------------
+      // VAI PARA O RELÓGIO
+      // ----------------------------------------------------------
+      //
+      // O usuarioId é enviado para o relogio.js
+      // para que ele continue pertencendo
+      // ao mesmo usuário.
+      //
+      // ----------------------------------------------------------
+
+      router.push({
+
+        pathname: '/relogio',
+
+        params: {
+          usuarioId: String(usuarioId),
+        },
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'Erro ao cadastrar usuário:',
+        error
+      );
+
+      // ----------------------------------------------------------
+      // E-MAIL JÁ EXISTENTE
+      // ----------------------------------------------------------
+
+      if (
+        error.message?.includes('UNIQUE')
+      ) {
+
+        alert(
+          'Este e-mail já está cadastrado.'
+        );
+
+      } else {
+
+        alert(
+          'Não foi possível realizar o cadastro.'
+        );
+
+      }
+
+    }
+
+  };
+
+  // ============================================================
+  // INTERFACE
+  // ============================================================
+
   return (
+
     <View style={styles.container}>
-      {/* FUNDO */}
+
+      {/* ========================================================
+          FUNDO
+      ======================================================== */}
+
       <LinearGradient
         colors={[
           '#899EEB',
@@ -128,13 +377,28 @@ export default function Cadastro() {
           '#E3E1D2',
           '#FFF5B8',
         ]}
-        locations={[0, 0.25, 0.52, 0.78, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        locations={[
+          0,
+          0.25,
+          0.52,
+          0.78,
+          1,
+        ]}
+        start={{
+          x: 0,
+          y: 0,
+        }}
+        end={{
+          x: 1,
+          y: 1,
+        }}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ARCOS */}
+      {/* ========================================================
+          ARCOS
+      ======================================================== */}
+
       <Animated.View
         pointerEvents="none"
         style={[
@@ -189,38 +453,57 @@ export default function Cadastro() {
         ]}
       />
 
-      {/* CONTEÚDO */}
+      {/* ========================================================
+          CONTEÚDO
+      ======================================================== */}
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* TÍTULO */}
+
+        {/* ======================================================
+            TÍTULO
+        ====================================================== */}
+
         <Animated.View
           style={{
             opacity: titleOpacity,
+
             transform: [
+
               {
                 translateX: titleTranslate,
               },
+
               {
                 scale: titleScale,
               },
+
             ],
           }}
         >
-          <Text style={styles.title}>CADASTRO</Text>
+
+          <Text style={styles.title}>
+            CADASTRO
+          </Text>
+
         </Animated.View>
 
         <Text style={styles.text}>
           Informe seus dados
         </Text>
 
-        {/* CARD */}
+        {/* ======================================================
+            CARD
+        ====================================================== */}
+
         <Animated.View
           style={[
             styles.card,
             {
               opacity: cardOpacity,
+
               transform: [
                 {
                   translateY: cardTranslate,
@@ -229,7 +512,11 @@ export default function Cadastro() {
             },
           ]}
         >
-          {/* NOME */}
+
+          {/* ====================================================
+              NOME
+          ==================================================== */}
+
           <Text style={styles.cardInfo}>
             NOME
           </Text>
@@ -242,7 +529,10 @@ export default function Cadastro() {
             onChangeText={setNome}
           />
 
-          {/* EMAIL */}
+          {/* ====================================================
+              EMAIL
+          ==================================================== */}
+
           <Text style={styles.cardInfo}>
             EMAIL
           </Text>
@@ -257,7 +547,10 @@ export default function Cadastro() {
             onChangeText={setEmail}
           />
 
-          {/* SENHA */}
+          {/* ====================================================
+              SENHA
+          ==================================================== */}
+
           <Text style={styles.cardInfo}>
             SENHA
           </Text>
@@ -271,38 +564,62 @@ export default function Cadastro() {
             onChangeText={setSenha}
           />
 
-          {/* PRIVACIDADE */}
+          {/* ====================================================
+              PRIVACIDADE
+          ==================================================== */}
+
           <View style={styles.privacyContainer}>
-            {/* TERMOS */}
+
+            {/* --------------------------------------------------
+                TERMOS
+            -------------------------------------------------- */}
+
             <Pressable
               style={styles.checkRow}
-              onPress={() => setAceitouTermos(!aceitouTermos)}
+              onPress={() =>
+                setAceitouTermos(
+                  !aceitouTermos
+                )
+              }
             >
+
               <View
                 style={[
                   styles.checkbox,
-                  aceitouTermos && styles.checkboxChecked,
+                  aceitouTermos &&
+                    styles.checkboxChecked,
                 ]}
               >
+
                 {aceitouTermos && (
+
                   <Text style={styles.check}>
                     ✓
                   </Text>
+
                 )}
+
               </View>
 
               <Text style={styles.privacyText}>
                 Li e concordo com os Termos de Uso.
               </Text>
+
             </Pressable>
 
-            {/* PRIVACIDADE */}
+            {/* --------------------------------------------------
+                PRIVACIDADE
+            -------------------------------------------------- */}
+
             <Pressable
               style={styles.checkRow}
               onPress={() =>
-                setAceitouPrivacidade(!aceitouPrivacidade)
+                setAceitouPrivacidade(
+                  !aceitouPrivacidade
+                )
               }
             >
+
               <View
                 style={[
                   styles.checkbox,
@@ -310,79 +627,69 @@ export default function Cadastro() {
                     styles.checkboxChecked,
                 ]}
               >
+
                 {aceitouPrivacidade && (
+
                   <Text style={styles.check}>
                     ✓
                   </Text>
+
                 )}
+
               </View>
 
               <Text style={styles.privacyText}>
                 Li e concordo com a Política de Privacidade.
               </Text>
+
             </Pressable>
+
           </View>
 
-          {/* BOTÃO CONTINUAR */}
+          {/* ====================================================
+              BOTÃO CONTINUAR
+          ==================================================== */}
+
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (!aceitouTermos || !aceitouPrivacidade) &&
+
+              (!aceitouTermos ||
+                !aceitouPrivacidade) &&
                 styles.nextButtonDisabled,
             ]}
             activeOpacity={0.85}
-            disabled={!aceitouTermos || !aceitouPrivacidade}
-            onPress={() => {
-              console.log('Cadastro:', {
-                nome,
-                email,
-                senha,
-              });
-
-              router.push('/relogio');
-            }}
+            disabled={
+              !aceitouTermos ||
+              !aceitouPrivacidade
+            }
+            onPress={cadastrarUsuario}
           >
+
             <Text style={styles.nextButtonText}>
               CONTINUAR
             </Text>
+
           </TouchableOpacity>
 
-          {/* DIVISOR */}
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-
-            <Text style={styles.dividerText}>
-              OU
-            </Text>
-
-            <View style={styles.divider} />
-          </View>
-
-          {/* GOOGLE */}
-          <TouchableOpacity
-            style={styles.googleButton}
-            activeOpacity={0.85}
-            onPress={() => {
-              console.log('Entrar com Google');
-            }}
-          >
-            <Text style={styles.googleIcon}>
-              G
-            </Text>
-
-            <Text style={styles.googleButtonText}>
-              CONTINUAR COM GOOGLE
-            </Text>
-          </TouchableOpacity>
         </Animated.View>
 
       </ScrollView>
+
     </View>
   );
 }
 
+// =================================================================
+// ESTILOS
+// =================================================================
+
 const styles = StyleSheet.create({
+
+  // ===============================================================
   // CONTAINER
+  // ===============================================================
+
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -395,7 +702,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // ===============================================================
   // ARCOS
+  // ===============================================================
+
   arc: {
     position: 'absolute',
     borderWidth: 2,
@@ -426,7 +736,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.17)',
   },
 
+  // ===============================================================
   // TÍTULO
+  // ===============================================================
+
   title: {
     fontSize: 45,
     fontWeight: '700',
@@ -440,17 +753,23 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
 
+  // ===============================================================
   // CARD
+  // ===============================================================
+
   card: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.94)',
     borderRadius: 20,
     padding: 24,
+
     shadowColor: '#30364D',
+
     shadowOffset: {
       width: 0,
       height: 5,
     },
+
     shadowOpacity: 0.10,
     shadowRadius: 12,
     elevation: 4,
@@ -476,7 +795,10 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
+  // ===============================================================
   // PRIVACIDADE
+  // ===============================================================
+
   privacyContainer: {
     width: '100%',
     marginTop: 5,
@@ -517,7 +839,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  // ===============================================================
   // BOTÃO
+  // ===============================================================
+
   nextButton: {
     width: '100%',
     height: 64,
@@ -539,7 +864,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  // ===============================================================
   // DIVISOR
+  // ===============================================================
+
   dividerContainer: {
     width: '100%',
     flexDirection: 'row',
@@ -561,7 +889,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // ===============================================================
   // GOOGLE
+  // ===============================================================
+
   googleButton: {
     width: '100%',
     height: 52,
@@ -587,7 +918,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  // ===============================================================
   // BOLINHAS
+  // ===============================================================
+
   pageDots: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -601,14 +935,18 @@ const styles = StyleSheet.create({
     height: 9,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
+
     shadowColor: '#30364D',
+
     shadowOffset: {
       width: 0,
       height: 2,
     },
+
     shadowOpacity: 0.45,
     shadowRadius: 4,
     elevation: 4,
+
     borderWidth: 1,
     borderColor: 'rgba(48,54,77,0.25)',
   },
@@ -618,24 +956,31 @@ const styles = StyleSheet.create({
     height: 17,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
+
     shadowColor: '#30364D',
+
     shadowOffset: {
       width: 0,
       height: 3,
     },
+
     shadowOpacity: 0.55,
     shadowRadius: 5,
     elevation: 5,
+
     borderWidth: 2,
     borderColor: 'rgba(48,54,77,0.30)',
   },
 
+  // ===============================================================
   // RODAPÉ
+  // ===============================================================
+
   footer: {
     textAlign: 'center',
     color: '#FFFFFF',
     opacity: 0.75,
     fontSize: 12,
   },
-});
 
+});

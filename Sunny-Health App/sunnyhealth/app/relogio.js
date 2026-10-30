@@ -1,32 +1,31 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Animated,
-  Easing,
-} from 'react-native';
-
+import {StyleSheet,Text,View,TouchableOpacity,Animated,Easing,ScrollView,useWindowDimensions,} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useRef, useState, useEffect } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Relogio() {
   // ============================================================
-  // 🔵 BLUETOOTH - FUTURO
+  // USUÁRIO
   // ============================================================
-  // A conexão Bluetooth será implementada aqui futuramente.
-  //
-  // Quando formos implementar:
-  // 1. Verificar se o Bluetooth está ligado
-  // 2. Procurar o ESP32
-  // 3. Identificar a pulseira correta
-  // 4. Conectar
-  // 5. Descobrir os serviços e características
-  // 6. Receber dados de BPM, tremor etc.
-  //
-  // NÃO COLOCAR O BLE AQUI AGORA.
+
+  const { usuarioId } = useLocalSearchParams();
+
+  // ============================================================
+  // DIMENSÕES DO CELULAR
+  // ============================================================
+
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const isSmallScreen = width < 360;
+  const isShortScreen = height < 700;
+
+  const horizontalPadding = isSmallScreen ? 18 : 25;
+
+  // ============================================================
+  // BLUETOOTH
   // ============================================================
 
   const [status, setStatus] = useState('idle');
@@ -35,7 +34,7 @@ export default function Relogio() {
   const scale = useRef(new Animated.Value(1)).current;
 
   // ============================================================
-  // 🌊 ONDAS - FUTURO VISUAL
+  // ONDAS
   // ============================================================
 
   const arc1 = useRef(new Animated.Value(0)).current;
@@ -43,16 +42,22 @@ export default function Relogio() {
   const arc3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animateArc = (animation, delay, duration = 6500) => {
+    const animateArc = (
+      animation,
+      delay,
+      duration = 6500
+    ) => {
       return Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
+
           Animated.timing(animation, {
             toValue: 1,
             duration,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
+
           Animated.timing(animation, {
             toValue: 0,
             duration,
@@ -106,6 +111,7 @@ export default function Relogio() {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
+
         Animated.timing(pulse, {
           toValue: 1,
           duration: 700,
@@ -128,51 +134,74 @@ export default function Relogio() {
   };
 
   // ============================================================
-  // 🔵 BLUETOOTH - FUTURO
-  // ============================================================
-  // Esta função atualmente NÃO faz uma conexão Bluetooth.
-  //
-  // Ela serve apenas para deixar a tela preparada para quando
-  // a comunicação com o ESP32 for implementada.
+  // CONECTAR PULSEIRA
   // ============================================================
 
   const conectarPulseira = () => {
-    if (status === 'connecting' || status === 'connected') {
+    if (
+      status === 'connecting' ||
+      status === 'connected'
+    ) {
       return;
     }
 
+    // Mostra que está conectando
     setStatus('connecting');
+
+    // Inicia animação da pulseira
     iniciarAnimacao();
 
-    // ==========================================================
-    // 🔵 BLUETOOTH - FUTURO
-    // ==========================================================
-    // A lógica real de Bluetooth entrará aqui futuramente.
-    //
-    // NÃO adicionar o código BLE agora.
-    // ==========================================================
-
+    // Simulação da conexão Bluetooth
     setTimeout(() => {
       pararAnimacao();
-      setStatus('idle');
-    }, 500);
+
+      // Simula que a pulseira foi conectada
+      setStatus('connected');
+
+      // Pequena animação no botão CONTINUAR
+      Animated.sequence([
+        Animated.spring(scale, {
+          toValue: 1.05,
+          friction: 4,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 5,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 1500);
   };
 
   // ============================================================
-  // PULAR CONEXÃO
-  // ============================================================
-
-  const pularConexao = () => {
-    router.push('/home');
-  };
-
-  // ============================================================
-  // CONTINUAR APÓS CONEXÃO
+  // CONTINUAR
   // ============================================================
 
   const continuar = () => {
-    router.push('/home');
+    router.replace({
+      pathname: '/questionario',
+      params: {
+        usuarioId: String(usuarioId),
+      },
+    });
   };
+
+  // ============================================================
+  // TAMANHO RESPONSIVO DA PULSEIRA
+  // ============================================================
+
+  const watchSize = isSmallScreen ? 130 : 150;
+  const watchRadius = watchSize / 2;
+
+  const iconSize = isSmallScreen ? 76 : 90;
+
+  // ============================================================
+  // TELA
+  // ============================================================
 
   return (
     <View style={styles.container}>
@@ -189,14 +218,26 @@ export default function Relogio() {
           '#E3E1D2',
           '#FFF5B8',
         ]}
-        locations={[0, 0.25, 0.52, 0.78, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        locations={[
+          0,
+          0.25,
+          0.52,
+          0.78,
+          1,
+        ]}
+        start={{
+          x: 0,
+          y: 0,
+        }}
+        end={{
+          x: 1,
+          y: 1,
+        }}
         style={StyleSheet.absoluteFill}
       />
 
       {/* ======================================================
-          🌊 ONDAS ANIMADAS
+          ONDAS
           ====================================================== */}
 
       <Animated.View
@@ -245,267 +286,361 @@ export default function Relogio() {
       />
 
       {/* ======================================================
-          CONTEÚDO
+          CONTEÚDO ROLÁVEL
           ====================================================== */}
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top + 20, 35),
+            paddingBottom: Math.max(insets.bottom + 30, 40),
+            paddingHorizontal: horizontalPadding,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        keyboardShouldPersistTaps="handled"
+      >
 
-        {/* ====================================================
-            TÍTULO
-            ==================================================== */}
+        <View style={styles.content}>
 
-        <Text style={styles.title}>
-          VAMOS CONECTAR
-        </Text>
+          {/* ====================================================
+              TÍTULO
+              ==================================================== */}
 
-        <Text style={styles.title}>
-          SUA PULSEIRA
-        </Text>
-
-        {/* ====================================================
-            ÍCONE DA PULSEIRA
-            ==================================================== */}
-
-        <Animated.View
-          style={[
-            styles.watchContainer,
-            {
-              transform: [{ scale: pulse }],
-            },
-          ]}
-        >
-          <View
+          <Text
             style={[
-              styles.watchCircle,
-              status === 'connected' &&
-                styles.watchCircleConnected,
+              styles.title,
+              isSmallScreen && styles.titleSmall,
             ]}
           >
-            <Ionicons
-              name="watch-outline"
-              size={90}
-              color={
-                status === 'connected'
-                  ? '#FFFFFF'
-                  : '#30364D'
-              }
-            />
-          </View>
+            VAMOS CONECTAR
+          </Text>
 
-          {status === 'connected' && (
-            <View style={styles.checkCircle}>
-              <Ionicons
-                name="checkmark"
-                size={28}
-                color="#FFFFFF"
-              />
-            </View>
-          )}
-        </Animated.View>
+          <Text
+            style={[
+              styles.title,
+              isSmallScreen && styles.titleSmall,
+            ]}
+          >
+            SUA PULSEIRA
+          </Text>
 
-        {/* ====================================================
-            INSTRUÇÃO
-            ==================================================== */}
+          {/* ====================================================
+              ÍCONE DA PULSEIRA
+              ==================================================== */}
 
-        <Text style={styles.instruction}>
-          {status === 'idle' &&
-            'Agora vamos conectar sua pulseira ao Sunny-Health.'}
+          <Animated.View
+            style={[
+              styles.watchContainer,
+              {
+                marginTop: isShortScreen ? 18 : 25,
+                marginBottom: isShortScreen ? 16 : 20,
 
-          {status === 'connecting' &&
-            'A conexão Bluetooth será configurada posteriormente.'}
-
-          {status === 'connected' &&
-            'Tudo certo! Sua pulseira está conectada.'}
-        </Text>
-
-        {/* ====================================================
-            PASSOS
-            ==================================================== */}
-
-        {status !== 'connected' && (
-          <View style={styles.stepsContainer}>
-
-            <View style={styles.step}>
-              <View style={styles.numberCircle}>
-                <Text style={styles.number}>1</Text>
-              </View>
-
-              <Text style={styles.stepText}>
-                Deixe a pulseira perto do seu celular.
-              </Text>
-            </View>
-
-            <View style={styles.step}>
-              <View style={styles.numberCircle}>
-                <Text style={styles.number}>2</Text>
-              </View>
-
-              <Text style={styles.stepText}>
-                Toque em "Conectar pulseira".
-              </Text>
-            </View>
+                transform: [
+                  {
+                    scale: pulse,
+                  },
+                ],
+              },
+            ]}
+          >
 
             <View
               style={[
-                styles.step,
+                styles.watchCircle,
                 {
-                  marginBottom: 0,
+                  width: watchSize,
+                  height: watchSize,
+                  borderRadius: watchRadius,
+                },
+
+                status === 'connected' &&
+                  styles.watchCircleConnected,
+              ]}
+            >
+
+              <Ionicons
+                name="watch-outline"
+                size={iconSize}
+                color={
+                  status === 'connected'
+                    ? '#FFFFFF'
+                    : '#30364D'
+                }
+              />
+
+            </View>
+
+            {/* ÍCONE DE CONFIRMAÇÃO */}
+
+            {status === 'connected' && (
+              <View style={styles.checkCircle}>
+                <Ionicons
+                  name="checkmark"
+                  size={28}
+                  color="#FFFFFF"
+                />
+              </View>
+            )}
+
+          </Animated.View>
+
+          {/* ====================================================
+              INSTRUÇÃO
+              ==================================================== */}
+
+          <Text
+            style={[
+              styles.instruction,
+              isSmallScreen &&
+                styles.instructionSmall,
+            ]}
+          >
+
+            {status === 'idle' &&
+              'Agora vamos conectar sua pulseira ao Sunny Health.'}
+
+            {status === 'connecting' &&
+              'Conectando sua pulseira ao Sunny Health...'}
+
+            {status === 'connected' &&
+              'Tudo certo! Sua pulseira está conectada.'}
+
+          </Text>
+
+          {/* ====================================================
+              PASSOS
+              ==================================================== */}
+
+          {status !== 'connected' && (
+            <View style={styles.stepsContainer}>
+
+              <View style={styles.step}>
+
+                <View style={styles.numberCircle}>
+                  <Text style={styles.number}>
+                    1
+                  </Text>
+                </View>
+
+                <Text style={styles.stepText}>
+                  Deixe a pulseira perto do seu celular.
+                </Text>
+
+              </View>
+
+              <View style={styles.step}>
+
+                <View style={styles.numberCircle}>
+                  <Text style={styles.number}>
+                    2
+                  </Text>
+                </View>
+
+                <Text style={styles.stepText}>
+                  Toque em "Conectar pulseira".
+                </Text>
+
+              </View>
+
+              <View
+                style={[
+                  styles.step,
+                  {
+                    marginBottom: 0,
+                  },
+                ]}
+              >
+
+                <View style={styles.numberCircle}>
+                  <Text style={styles.number}>
+                    3
+                  </Text>
+                </View>
+
+                <Text style={styles.stepText}>
+                  Aguarde a configuração da conexão.
+                </Text>
+
+              </View>
+
+            </View>
+          )}
+
+          {/* ====================================================
+              STATUS
+              ==================================================== */}
+
+          <View
+            style={[
+              styles.statusContainer,
+              status === 'connected' &&
+                styles.statusContainerConnected,
+            ]}
+          >
+
+            <View
+              style={[
+                styles.statusDot,
+
+                status === 'connecting' &&
+                  styles.statusDotConnecting,
+
+                status === 'connected' &&
+                  styles.statusDotConnected,
+              ]}
+            />
+
+            <Text style={styles.statusText}>
+
+              {status === 'idle' &&
+                'Bluetooth ainda não configurado'}
+
+              {status === 'connecting' &&
+                'Conectando...'}
+
+              {status === 'connected' &&
+                'Pulseira conectada'}
+
+            </Text>
+
+          </View>
+
+          {/* ====================================================
+              BOTÕES
+              ==================================================== */}
+
+          {status !== 'connected' ? (
+
+            <View style={styles.buttonsContainer}>
+
+              {/* BOTÃO CONECTAR */}
+
+              <TouchableOpacity
+                style={[
+                  styles.connectButton,
+
+                  status === 'connecting' &&
+                    styles.connectButtonConnecting,
+                ]}
+                activeOpacity={0.85}
+                onPress={conectarPulseira}
+                disabled={status === 'connecting'}
+              >
+
+                <Ionicons
+                  name={
+                    status === 'connecting'
+                      ? 'bluetooth'
+                      : 'bluetooth-outline'
+                  }
+                  size={27}
+                  color="#FFFFFF"
+                />
+
+                <Text
+                  style={[
+                    styles.connectButtonText,
+                    isSmallScreen &&
+                      styles.buttonTextSmall,
+                  ]}
+                >
+
+                  {status === 'connecting'
+                    ? 'CONECTANDO...'
+                    : 'CONECTAR PULSEIRA'}
+
+                </Text>
+
+              </TouchableOpacity>
+
+            </View>
+
+          ) : (
+
+            /* ==================================================
+               BOTÃO CONTINUAR
+               ================================================== */
+
+            <Animated.View
+              style={[
+                styles.continueWrapper,
+                {
+                  transform: [
+                    {
+                      scale,
+                    },
+                  ],
                 },
               ]}
             >
-              <View style={styles.numberCircle}>
-                <Text style={styles.number}>3</Text>
-              </View>
 
-              <Text style={styles.stepText}>
-                Aguarde a configuração da conexão.
-              </Text>
-            </View>
+              <TouchableOpacity
+                style={styles.continueButton}
+                activeOpacity={0.85}
+                onPress={continuar}
+              >
 
-          </View>
-        )}
+                <Text
+                  style={[
+                    styles.continueButtonText,
+                    isSmallScreen &&
+                      styles.buttonTextSmall,
+                  ]}
+                >
+                  CONTINUAR
+                </Text>
 
-        {/* ====================================================
-            STATUS
-            ==================================================== */}
+              </TouchableOpacity>
 
-        <View
-          style={[
-            styles.statusContainer,
-            status === 'connected' &&
-              styles.statusContainerConnected,
-          ]}
-        >
-          <View
-            style={[
-              styles.statusDot,
-              status === 'connecting' &&
-                styles.statusDotConnecting,
-              status === 'connected' &&
-                styles.statusDotConnected,
-            ]}
-          />
+            </Animated.View>
 
-          <Text style={styles.statusText}>
-            {status === 'idle' &&
-              'Bluetooth ainda não configurado'}
+          )}
 
-            {status === 'connecting' &&
-              'Bluetooth será configurado depois'}
-
-            {status === 'connected' &&
-              'Pulseira conectada'}
-          </Text>
         </View>
 
-        {/* ====================================================
-            BOTÕES
-            ==================================================== */}
-
-        {status !== 'connected' ? (
-          <>
-            <TouchableOpacity
-              style={[
-                styles.connectButton,
-                status === 'connecting' &&
-                  styles.connectButtonConnecting,
-              ]}
-              activeOpacity={0.85}
-              onPress={conectarPulseira}
-              disabled={status === 'connecting'}
-            >
-              <Ionicons
-                name={
-                  status === 'connecting'
-                    ? 'bluetooth'
-                    : 'bluetooth-outline'
-                }
-                size={27}
-                color="#FFFFFF"
-              />
-
-              <Text style={styles.connectButtonText}>
-                CONECTAR PULSEIRA
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.skipButton}
-              activeOpacity={0.75}
-              onPress={pularConexao}
-            >
-              <Text style={styles.skipButtonText}>
-                PULAR POR ENQUANTO
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Animated.View
-            style={{
-              width: '100%',
-              transform: [{ scale }],
-            }}
-          >
-            <TouchableOpacity
-              style={styles.continueButton}
-              activeOpacity={0.85}
-              onPress={continuar}
-            >
-              <Text style={styles.continueButtonText}>
-                CONTINUAR
-              </Text>
-
-              <Ionicons
-                name="arrow-forward"
-                size={25}
-                color="#FFFFFF"
-              />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-
-      </View>
-
-      {/* ======================================================
-          🔵 PAGINAÇÃO
-          Página 2 de 3
-          Fica FIXA no fundo da tela
-          ====================================================== */}
-
-      <View
-        pointerEvents="none"
-        style={styles.pagination}
-      >
-        <View style={styles.paginationDot} />
-
-        <View
-          style={[
-            styles.paginationDot,
-            styles.paginationDotActive,
-          ]}
-        />
-
-        <View style={styles.paginationDot} />
-      </View>
+      </ScrollView>
 
     </View>
   );
 }
 
+// ============================================================
+// ESTILOS
+// ============================================================
+
 const styles = StyleSheet.create({
 
-  // ============================================================
+  // ==========================================================
   // CONTAINER
-  // ============================================================
+  // ==========================================================
 
   container: {
     flex: 1,
     overflow: 'hidden',
   },
 
-  // ============================================================
-  // 🌊 ONDAS
-  // ============================================================
+  scroll: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  content: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+
+  // ==========================================================
+  // ONDAS
+  // ==========================================================
 
   arc: {
     position: 'absolute',
@@ -537,21 +672,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.17)',
   },
 
-  // ============================================================
-  // CONTEÚDO
-  // ============================================================
-
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 25,
-    paddingTop: 65,
-    paddingBottom: 85,
-  },
-
-  // ============================================================
+  // ==========================================================
   // TÍTULO
-  // ============================================================
+  // ==========================================================
 
   title: {
     fontSize: 34,
@@ -562,20 +685,20 @@ const styles = StyleSheet.create({
     lineHeight: 42,
   },
 
-  // ============================================================
+  titleSmall: {
+    fontSize: 29,
+    lineHeight: 36,
+  },
+
+  // ==========================================================
   // PULSEIRA
-  // ============================================================
+  // ==========================================================
 
   watchContainer: {
-    marginTop: 25,
-    marginBottom: 20,
     position: 'relative',
   },
 
   watchCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
     backgroundColor: 'rgba(255,255,255,0.82)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -598,55 +721,81 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: -5,
     bottom: 0,
+
     width: 48,
     height: 48,
     borderRadius: 24,
+
     backgroundColor: '#55B878',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     borderWidth: 4,
     borderColor: '#FFFFFF',
   },
 
-  // ============================================================
+  // ==========================================================
   // INSTRUÇÃO
-  // ============================================================
+  // ==========================================================
 
   instruction: {
+    width: '100%',
+    maxWidth: 400,
+
     fontSize: 19,
     lineHeight: 27,
+
     color: '#30364D',
     textAlign: 'center',
     fontWeight: '500',
-    maxWidth: 360,
+
     marginBottom: 20,
   },
 
-  // ============================================================
+  instructionSmall: {
+    fontSize: 17,
+    lineHeight: 24,
+  },
+
+  // ==========================================================
   // PASSOS
-  // ============================================================
+  // ==========================================================
 
   stepsContainer: {
     width: '100%',
+
     backgroundColor: 'rgba(255,255,255,0.70)',
+
     borderRadius: 18,
+
     padding: 17,
+
     marginBottom: 17,
   },
 
   step: {
+    width: '100%',
+
     flexDirection: 'row',
     alignItems: 'center',
+
     marginBottom: 12,
   },
 
   numberCircle: {
     width: 34,
     height: 34,
+
+    flexShrink: 0,
+
     borderRadius: 17,
+
     backgroundColor: '#899EEB',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     marginRight: 12,
   },
 
@@ -658,20 +807,27 @@ const styles = StyleSheet.create({
 
   stepText: {
     flex: 1,
+
     color: '#30364D',
+
     fontSize: 16,
     lineHeight: 21,
   },
 
-  // ============================================================
+  // ==========================================================
   // STATUS
-  // ============================================================
+  // ==========================================================
 
   statusContainer: {
+    width: '100%',
+
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+
     marginBottom: 17,
+
+    paddingHorizontal: 8,
   },
 
   statusContainerConnected: {
@@ -681,8 +837,13 @@ const styles = StyleSheet.create({
   statusDot: {
     width: 13,
     height: 13,
+
+    flexShrink: 0,
+
     borderRadius: 7,
+
     backgroundColor: '#F0D060',
+
     marginRight: 9,
   },
 
@@ -695,23 +856,44 @@ const styles = StyleSheet.create({
   },
 
   statusText: {
+    flexShrink: 1,
+
     fontSize: 16,
     fontWeight: '700',
+
     color: '#30364D',
+
+    textAlign: 'center',
   },
 
-  // ============================================================
-  // BOTÃO BLUETOOTH - FUTURO
-  // ============================================================
+  // ==========================================================
+  // BOTÕES
+  // ==========================================================
+
+  buttonsContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  // ==========================================================
+  // BOTÃO BLUETOOTH
+  // ==========================================================
 
   connectButton: {
     width: '100%',
-    height: 67,
+
+    minHeight: 67,
+
     borderRadius: 18,
+
     backgroundColor: '#F0D060',
+
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+
+    paddingHorizontal: 18,
+
     gap: 10,
 
     shadowColor: '#30364D',
@@ -729,42 +911,45 @@ const styles = StyleSheet.create({
   },
 
   connectButtonText: {
+    flexShrink: 1,
+
     color: '#FFFFFF',
+
     fontSize: 17,
     fontWeight: '800',
+
     letterSpacing: 0.5,
+
+    textAlign: 'center',
   },
 
-  // ============================================================
-  // BOTÃO PULAR
-  // ============================================================
-
-  skipButton: {
-    marginTop: 13,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  buttonTextSmall: {
+    fontSize: 15,
   },
 
-  skipButtonText: {
-    color: '#30364D',
-    fontSize: 14,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-    letterSpacing: 0.3,
-  },
+  // ==========================================================
+  // CONTINUAR
+  // ==========================================================
 
-  // ============================================================
-  // BOTÃO CONTINUAR
-  // ============================================================
+  continueWrapper: {
+    width: '100%',
+  },
 
   continueButton: {
     width: '100%',
-    height: 67,
+
+    minHeight: 67,
+
     borderRadius: 18,
+
     backgroundColor: '#55B878',
+
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+
+    paddingHorizontal: 18,
+
     gap: 10,
 
     shadowColor: '#30364D',
@@ -778,39 +963,17 @@ const styles = StyleSheet.create({
   },
 
   continueButtonText: {
+    flexShrink: 1,
+
     color: '#FFFFFF',
+
     fontSize: 18,
     fontWeight: '800',
+
     letterSpacing: 0.7,
+
+    textAlign: 'center',
   },
 
-  // ============================================================
-  // PAGINAÇÃO
-  // ============================================================
-
-  pagination: {
-    position: 'absolute',
-    bottom: 28,
-    left: 0,
-    right: 0,
-    height: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 9,
-  },
-
-  paginationDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-  },
-
-  paginationDotActive: {
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-  },
 });
+
